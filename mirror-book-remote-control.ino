@@ -37,11 +37,9 @@ void error(const __FlashStringHelper*err) {
   while (1);
 }
 
-/* The service information */
-
-int32_t hrmServiceId;
-int32_t hrmMeasureCharId;
-int32_t hrmLocationCharId;
+// The service and characteristic index information 
+int32_t gattServiceId;
+int32_t gattNotifiableCharId;
 
 void setup() {
 
@@ -89,29 +87,24 @@ void setup() {
     error(F("Could not set device name?"));
   }
 
-  /* Add the Heart Rate Service definition */
+
+  /* Add the Custom GATT Service definition */
   /* Service ID should be 1 */
-  Serial.println(F("Adding the Heart Rate Service definition (UUID = 0x180D): "));
-  success = ble.sendCommandWithIntReply( F("AT+GATTADDSERVICE=UUID=0x180D"), &hrmServiceId);
+  Serial.println(F("Adding the Custom GATT Service definition: "));
+  success = ble.sendCommandWithIntReply( F("AT+GATTADDSERVICE=UUID128=F1-78-09-BF-BF-CE-4C-82-9E-58-52-30-90-E4-CA-03"), &gattServiceId);
   if (! success) {
-    error(F("Could not add HRM service"));
+    error(F("Could not add Custom GATT service"));
   }
-
-  /* Add the Heart Rate Measurement characteristic */
-  /* Chars ID for Measurement should be 1 */
-  Serial.println(F("Adding the Heart Rate Measurement characteristic (UUID = 0x2A37): "));
-  success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2A37, PROPERTIES=0x10, MIN_LEN=2, MAX_LEN=3, VALUE=00-40"), &hrmMeasureCharId);
+ 
+  /* Add the Readable/Notifiable characteristic - this characteristic will be set every time the color of the LED is changed */
+  /* Characteristic ID should be 1 */
+  /* 0x00FF00 == RGB HEX of GREEN */
+  Serial.println(F("Adding the Notifiable characteristic: "));
+  success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID128=FD-D8-D9-70-9D-96-4A-C7-A2-E1-84-D2-04-F6-52-3B,PROPERTIES=0x12,MIN_LEN=1, MAX_LEN=3, VALUE=0x00FF00"), &gattNotifiableCharId);
     if (! success) {
-    error(F("Could not add HRM characteristic"));
+    error(F("Could not add Custom Notifiable characteristic"));
   }
-
-  /* Add the Body Sensor Location characteristic */
-  /* Chars ID for Body should be 2 */
-  Serial.println(F("Adding the Body Sensor Location characteristic (UUID = 0x2A38): "));
-  success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2A38, PROPERTIES=0x02, MIN_LEN=1, VALUE=3"), &hrmLocationCharId);
-    if (! success) {
-    error(F("Could not add BSL characteristic"));
-  }
+  
 
   /* Reset the device for the new service setting changes to take effect */
   Serial.print(F("Performing a SW reset (service changes require a reset): "));
@@ -147,18 +140,7 @@ void loop() {
     digitalWrite(LED_BUILTIN, LOW);
   }
 
-  /* Command is sent when \n (\r) or println is called */
-  /* AT+GATTCHAR=CharacteristicID,value */
-  ble.print( F("AT+GATTCHAR=") );
-  ble.print( hrmMeasureCharId );
-  ble.print( F(",00-") );
-  ble.println(newPosition, HEX);
 
-  /* Check if command executed OK */
-  if ( !ble.waitForOK() )
-  {
-    Serial.println(F("Failed to get response!"));
-  }
 
 
   
@@ -166,6 +148,18 @@ void loop() {
 
   if (oldPosition != newPosition) {
     changeTime = nowish;
+    /* Command is sent when \n (\r) or println is called */
+    /* AT+GATTCHAR=CharacteristicID,value */
+    ble.print( F("AT+GATTCHAR=") );
+    ble.print( gattNotifiableCharId );
+    ble.print( F(",") );
+    ble.println(newPosition, HEX);
+  
+    /* Check if command executed OK */
+    if ( !ble.waitForOK() )
+    {
+      Serial.println(F("Failed to get response!"));
+    }
   }
   oldPosition = newPosition;
   
