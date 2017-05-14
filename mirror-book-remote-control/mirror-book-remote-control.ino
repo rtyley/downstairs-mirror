@@ -1,4 +1,4 @@
-#include <Adafruit_DotStar.h>
+   #include <Adafruit_DotStar.h>
 // Because conditional #includes don't work w/Arduino sketches...
 #include <SPI.h>         // COMMENT OUT THIS LINE FOR GEMMA OR TRINKET
 //#include <avr/power.h> // ENABLE THIS LINE FOR GEMMA OR TRINKET
@@ -147,11 +147,11 @@ void loop() {
     ble.print( F("AT+GATTCHAR=") );
     ble.print( gattNotifiableCharId );
     ble.print( F(",") );
-    ble.println(encA.read() % 256, HEX);
+    ble.print(encA.read() & 0xFF, HEX);
     ble.print( F("-") );
-    ble.println(encB.read() % 256, HEX);
+    ble.print(encB.read() & 0xFF, HEX);
     ble.print( F("-") );
-    ble.println(encC.read() % 256, HEX);
+    ble.println(encC.read() & 0xFF, HEX);
   
     /* Check if command executed OK */
     if ( !ble.waitForOK() )
