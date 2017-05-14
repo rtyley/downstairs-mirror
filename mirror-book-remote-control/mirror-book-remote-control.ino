@@ -52,8 +52,6 @@ void setup() {
   Serial.println(F("Adafruit Bluefruit Heart Rate Monitor (HRM) Example"));
   Serial.println(F("---------------------------------------------------"));
 
-  randomSeed(micros());
-
   /* Initialise the module */
   Serial.print(F("Initialising the Bluefruit LE module: "));
 
@@ -100,7 +98,7 @@ void setup() {
   /* Characteristic ID should be 1 */
   /* 0x00FF00 == RGB HEX of GREEN */
   Serial.println(F("Adding the Notifiable characteristic: "));
-  success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID128=FD-D8-D9-70-9D-96-4A-C7-A2-E1-84-D2-04-F6-52-3B,PROPERTIES=0x12,MIN_LEN=1, MAX_LEN=3, VALUE=0x00FF00"), &gattNotifiableCharId);
+  success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID128=FD-D8-D9-70-9D-96-4A-C7-A2-E1-84-D2-04-F6-52-3B,PROPERTIES=0x12,MIN_LEN=3, MAX_LEN=3, VALUE=0x00FF00"), &gattNotifiableCharId);
     if (! success) {
     error(F("Could not add Custom Notifiable characteristic"));
   }
@@ -139,10 +137,6 @@ void loop() {
   } else {
     digitalWrite(LED_BUILTIN, LOW);
   }
-
-
-
-
   
   delay(100);
 
@@ -153,7 +147,11 @@ void loop() {
     ble.print( F("AT+GATTCHAR=") );
     ble.print( gattNotifiableCharId );
     ble.print( F(",") );
-    ble.println(newPosition, HEX);
+    ble.println(encA.read() % 256, HEX);
+    ble.print( F("-") );
+    ble.println(encB.read() % 256, HEX);
+    ble.print( F("-") );
+    ble.println(encC.read() % 256, HEX);
   
     /* Check if command executed OK */
     if ( !ble.waitForOK() )
